@@ -19,6 +19,7 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -48,6 +49,8 @@ import (
 
 var logger *log.Entry
 var extpoints []plugin.ComposePlugin
+
+const prefix = "org.apache.aurora.metadata"
 
 type dockerComposeExecutor struct {
 	tasksLaunched int
@@ -478,7 +481,7 @@ func injectSleepSimulation(taskInfo *mesos.TaskInfo) {
 	log.Printf("instanceID %s", instanceID)
 	labelsList := taskInfo.GetLabels().GetLabels()
 	log.Printf("labels %+v", labelsList)
-	sim := pod.GetLabel("genesis.aurora_timeout_simulation", taskInfo)
+	sim := pod.GetLabel(fmt.Sprintf("%s.%s", prefix, "genesis.aurora_timeout_simulation"), taskInfo)
 	log.Printf("timeout instances ids: %s", sim)
 
 	// check the pod instance falls into simulation range or not
