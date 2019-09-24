@@ -488,7 +488,21 @@ func injectSleepSimulation(taskInfo *mesos.TaskInfo) {
 	timeoutInstanceIds := strings.Split(sim, ",")
 	for _, id := range timeoutInstanceIds {
 		if id == instanceID {
-			time.Sleep(13 * time.Minute)
+			//todo: make it configurable
+			dur := pod.GetLabel(fmt.Sprintf("%s.%s", prefix, "genesis.aurora_sleep_duration"), taskInfo)
+			log.Printf("get aurora_sleep_duration: %s", dur)
+			if dur != "" {
+				if duration, err := time.ParseDuration(dur); err != nil {
+					time.Sleep(duration)
+					log.Printf("sleep %s", duration)
+				} else {
+					log.Printf("sleep 16m")
+					time.Sleep(16 * time.Minute)
+				}
+			} else {
+				log.Printf("sleep 16m")
+				time.Sleep(16 * time.Minute)
+			}
 		}
 	}
 }
