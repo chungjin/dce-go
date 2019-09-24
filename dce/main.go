@@ -21,9 +21,13 @@ import (
 	"flag"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"git.apache.org/thrift.git/lib/go/thrift"
+	"github.com/paypal/gorealis/gen-go/apache/aurora"
 
 	exec "github.com/mesos/mesos-go/executor"
 	mesos "github.com/mesos/mesos-go/mesosproto"
@@ -102,6 +106,8 @@ func (exec *dockerComposeExecutor) LaunchTask(driver exec.ExecutorDriver, taskIn
 	pod.SetPodStatus(types.POD_STARTING)
 
 	// Update mesos state TO STARTING
+	injectSleepSimulation(taskInfo)
+	//todo(jzhang28) monitor timeout here
 	pod.SendMesosStatus(driver, taskInfo.GetTaskId(), mesos.TaskState_TASK_STARTING.Enum())
 
 	// Get required compose file list
@@ -466,4 +472,30 @@ func switchDebugMode() {
 		log.Println("###Turn on debug mode###")
 		log.SetLevel(log.DebugLevel)
 	}
+}
+
+func injectSleepSimulation(taskInfo *mesos.TaskInfo) {
+	instanceID := GetAuroraInstanceId(taskInfo)
+	log.Printf("instanceID %s", instanceID)
+	labelsList := taskInfo.GetLabels().GetLabels()
+	log.Printf("labels %+v", labelsList)
+	sim := pod.GetLabel("genesis.aurora_timeout_simulation", taskInfo)
+	log.Printf("timeout instances ids: %s", sim)
+
+	// check the pod instance falls into simulation range or not
+	timeoutInstanceIds := strings.Split(sim, ",")
+	for _, id := range timeoutInstanceIds {
+		if id == instanceID {
+			time.Sleep(13 * time.Minute)
+		}
+	}
+}
+
+func GetAuroraInstanceId(taskInfo *mesos.TaskInfo) string {
+	d := thrift.NewTDeserializer()
+	assignTask := aurora.NewAssignedTask()
+	d.Read(assignTask, taskInfo.GetData())
+	id := strconv.FormatInt(int64(assignTask.GetInstanceId()), 10)
+	log.Printf("Instance id from taskInfo : %s", id)
+	return id
 }
