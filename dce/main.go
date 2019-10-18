@@ -481,7 +481,7 @@ func injectSleepSimulation(taskInfo *mesos.TaskInfo) {
 	log.Printf("instanceID %s", instanceID)
 	labelsList := taskInfo.GetLabels().GetLabels()
 	log.Printf("labels %+v", labelsList)
-	sim := pod.GetLabel(fmt.Sprintf("%s.%s", prefix, "genesis.aurora_timeout_simulation"), taskInfo)
+	sim := pod.GetLabel(fmt.Sprintf("%s.%s", prefix, "genesis.aurora_instancelost_simulation"), taskInfo)
 	log.Printf("timeout instances ids: %s", sim)
 
 	// check the pod instance falls into simulation range or not
